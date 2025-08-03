@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+  <meta charset="UTF-8">
+  <title>اختيار ألعاب الكيدز إيريا</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+      direction: rtl;
+    }
+    h2, h3 {
+      color: #333;
+    }
+    #gamesContainer {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 20px;
+    }
+    .game {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      padding: 15px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    .game img {
+      max-width: 100%;
+      border-radius: 10px;
+      margin-bottom: 10px;
+    }
+    .game-details {
+      text-align: center;
+    }
+    .game h4 {
+      margin: 5px 0;
+      font-size: 18px;
+      color: #007bff;
+    }
+    .game p {
+      margin: 5px 0;
+      color: #555;
+    }
+    .game button {
+      padding: 8px 12px;
+      background-color: #28a745;
+      border: none;
+      color: white;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .game button:hover {
+      background-color: #218838;
+    }
+    #cartSummary {
+      background: #fff;
+      padding: 15px;
+      margin-top: 30px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+    #cartSummary ul {
+      list-style: none;
+      padding: 0;
+    }
+    #cartSummary li {
+      margin-bottom: 5px;
+    }
+    #cartSummary h4 {
+      margin-bottom: 10px;
+      color: #28a745;
+    }
+    form {
+      background: #fff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+      margin-top: 30px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      margin-top: 10px;
+      color: #333;
+    }
+    input[type="text"] {
+      width: 100%;
+      padding: 10px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      margin-bottom: 15px;
+    }
+    input[type="submit"] {
+      background-color: #007bff;
+      color: white;
+      border: none;
+      padding: 10px 20px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    input[type="submit"]:hover {
+      background-color: #0056b3;
+    }
+    #status {
+      margin-top: 15px;
+      font-weight: bold;
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>📋 اختر ألعاب المتاهة</h2>
+  <div id="gamesContainer">⏳ جاري تحميل الألعاب...</div>
+
+  <div id="cartSummary">
+    <h4>🧺 الألعاب المختارة:</h4>
+    <ul id="cartItems"></ul>
+    <p><strong>💰 المجموع: <span id="totalPrice">0</span> جنيه</strong></p>
+  </div>
+
+  <form id="clientForm">
+    <h3>💼 بيانات العميل</h3>
+    <label for="name">الاسم:</label>
+    <input type="text" name="name" required>
+
+    <label for="phone">رقم التليفون:</label>
+    <input type="text" name="phone" required>
+
+    <label for="project">اسم المشروع:</label>
+    <input type="text" name="project" required>
+
+    <input type="submit" value="📨 إرسال الطلب">
+  </form>
+
+  <div id="status"></div>
+
+  <script>
+    const gamesUrl = "https://script.google.com/macros/s/AKfycbwLN7-vLVy-F4P_q3Gz-p_yhk4rHKWUrz8_XvVTqsvU0FgUUvG4mni46ZZFbK2Mhr8t/exec";
+    const submitUrl = "https://script.google.com/macros/s/AKfycbztZJZ-vFCxAidhu9N3pKQhxNN6JAEyMso9JJH_nVYHdXjTmRyLVDNC8U321C_nNymD/exec";
+
+    let selectedItems = [];
+    let totalPrice = 0;
+
+    function updateCartDisplay() {
+      const cartList = document.getElementById("cartItems");
+      const priceSpan = document.getElementById("totalPrice");
+      cartList.innerHTML = "";
+      selectedItems.forEach(item => {
+        const li = document.createElement("li");
+        li.textContent = item.name;
+        cartList.appendChild(li);
+      });
+      priceSpan.textContent = totalPrice;
+    }
+
+    // تحميل الألعاب
+    fetch(gamesUrl)
+      .then(res => res.json())
+      .then(data => {
+        const container = document.getElementById("gamesContainer");
+        container.innerHTML = "";
+
+        data.forEach(game => {
+          const name = game.name || game["Name"] || "بدون اسم";
+          const description = game.description || game["desciption"] || "لا يوجد وصف";
+          const price = parseFloat(game.price) || 0;
+          const image = game.image || "";
+
+          const div = document.createElement("div");
+          div.className = "game";
+
+          div.innerHTML = `
+            <img src="${image}" alt="${name}">
+            <div class="game-details">
+              <h4>${name}</h4>
+              <p>${description}</p>
+              <p>💰 السعر: ${price} جنيه</p>
+              <button type="button" onclick="addToCart('${name}', ${price})">➕ أضف</button>
+            </div>
+          `;
+
+          container.appendChild(div);
+        });
+      })
+      .catch(() => {
+        document.getElementById("gamesContainer").innerText = "⚠️ حدث خطأ أثناء تحميل الألعاب.";
+      });
+
+    function addToCart(name, price) {
+      selectedItems.push({ name, price });
+      totalPrice += price;
+      updateCartDisplay();
+    }
+
+    // إرسال البيانات
+    document.getElementById("clientForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+
+      const formData = new FormData(e.target);
+      formData.append("Selected Items", selectedItems.map(i => i.name).join(", "));
+      formData.append("Total Price", totalPrice);
+
+      fetch(submitUrl, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.text())
+      .then(() => {
+        document.getElementById("status").innerText = "🎉 تم إرسال الطلب بنجاح!";
+        e.target.reset();
+        selectedItems = [];
+        totalPrice = 0;
+        updateCartDisplay();
+      })
+      .catch(() => {
+        document.getElementById("status").innerText = "❌ حدث خطأ أثناء الإرسال.";
+      });
+    });
+  </script>
+
+</body>
+</html>
